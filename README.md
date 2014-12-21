@@ -6,4 +6,4 @@ Here are some examples of the Dispatcher in action:
 * [Penrose Tile Generation](https://www.youtube.com/watch?v=aTovnScmNhc) -- This is a Perl script tiles a portion of a region using a [Penrose tiling](http://en.wikipedia.org/wiki/Penrose_tiling) pattern.
 * [Mobdat Traffic Simulation](https://www.youtube.com/watch?v=32HB5gnjtPk) -- Mobdat is a social traffic simulation that uses OpenSim for visualizing the movement of traffic. The Dispatcher handles real-time updates for thousands of simulated cars.
 
-See the [Documentation](https://github.com/cmickeyb/dispatcher/wiki/Documentation) section for more information.
+See the [Wiki](https://github.com/cmickeyb/dispatcher/wiki/) for more information.
