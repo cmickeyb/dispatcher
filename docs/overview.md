@@ -21,7 +21,7 @@ capability that can be generated solely
 The OpenSim Dispatcher is partitioned into three independent layers: the
 transport layer, the presentation layer and the messaging layer.
 
-![High Level Architecture](images/architecture.png =250x)
+![High Level Architecture](images/architecture.png)
 
 ### Transport Layer
 
