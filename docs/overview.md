@@ -1,5 +1,7 @@
 # OVERVIEW #
 
+![Mobdat Simulation Screenshot](images/cars.png)
+
 ## INTRODUCTION
 
 The OpenSim Dispatcher defines a message-based, layered interface for
@@ -19,7 +21,7 @@ capability that can be generated solely
 The OpenSim Dispatcher is partitioned into three independent layers: the
 transport layer, the presentation layer and the messaging layer.
 
-![Mobdat Simulation Screenshot](images/cars.png)
+![High Level Architecture](images/architecture.png =250x)
 
 ### Transport Layer
 
