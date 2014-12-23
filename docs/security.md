@@ -34,3 +34,48 @@ not authorize the client to send a particular message, then the message
 is immediately dropped and a "Not authorized" response is sent to the
 client.
 
+## CONFIGURATION ##
+
+General information about security configuration directives can be found
+in the [Configuration Directives](config.md) document.
+
+### Open Access to All Users ###
+
+This configuration is recommended only for debugging purposes on a
+physically disconnected network. Capabilities are not validated for any
+request so that anyone with a network connection to your simulator can
+send any message.
+
+    [Dispatcher]
+    Enabled = true
+    UseAuthentication = false
+
+### Access Limited to Estate Managers ###
+
+Limit access to users specified in the OpenSim configuration as Estate
+Managers or the owner of the estate. This is the recommended
+configuration and is the default configuration when the dispatcher is
+enabled. 
+
+    [Dispatcher]
+    Enabled = true
+    UseAuthentication = true
+    GrantEstateManagersAccess = true
+    GrantGridManagersAccess = false
+
+### Access Granted to Estate Managers and Grid Managers ###
+
+Enable access for grid managers who have an account access level greater
+than 200. Account access levels can be set when the account is created.
+
+    [Dispatcher]
+    Enabled = true
+    UseAuthentication = true
+    GrantGridManagersAccess = true
+    GridManagerAccessLevel = 200
+
+## TODO ##
+
+* Filter incoming requests by IP address prior to handling the request.
+* Implement domain specific access configuration
+* Add risk levels and message specific access controls similar to OSSL

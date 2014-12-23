@@ -13,13 +13,15 @@ and handling of in-world events.
 Here are some examples of the Dispatcher in action: 
 
 * [Penrose Tile Generation](https://www.youtube.com/watch?v=aTovnScmNhc)
--- This is a Perl script tiles a portion of a region using a
-[Penrose tiling](http://en.wikipedia.org/wiki/Penrose_tiling) pattern.
+-- This is a Perl script that places tiles in a portion of a region
+using a [Penrose tiling](http://en.wikipedia.org/wiki/Penrose_tiling)
+pattern. The script can be found [here](scripts/perl/samples/penrose.pl)
 
 * [Mobdat Traffic Simulation](https://www.youtube.com/watch?v=32HB5gnjtPk)
--- Mobdat is a social traffic simulation that uses OpenSim for
-visualizing the movement of traffic. The Dispatcher handles real-time
-updates for thousands of simulated cars.
+-- [Mobdat](https://github.com/cmickeyb/mobdat) is a social traffic
+simulation that uses OpenSim for visualizing the movement of
+traffic. The Dispatcher handles real-time updates for thousands of
+simulated cars.
 
 See the document, [Dispatcher Overview](docs/overview.md), for more
 information.
