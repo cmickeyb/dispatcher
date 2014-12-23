@@ -14,3 +14,4 @@ capability that can be generated solely
 
 * [High Level Architecture](architecture.md)
 * [Security](security.md)
+* [Configuration](config.md)

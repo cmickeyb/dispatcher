@@ -37,7 +37,7 @@ associated with it.
 
 ## Authentication messages ##
 
-[Specification](/modules/dispatcher/Dispatcher/AuthMessages.js)
+[Specification](../specs/AuthMessages.js)
 
 Authentication messages manage capabilities providing a means of
 creating new capabilities, renewing the lifespan of existing
