@@ -85,7 +85,7 @@ namespace Dispatcher
 
         public UUID EndPointID;
         
-        public String Host { get; set; }
+        public IPAddress Host { get; set; }
         public int Port { get; set; }
 
         public int LastRenewTime { get; set; } // tick count in milliseconds
@@ -103,23 +103,15 @@ namespace Dispatcher
         /// <summary>
         /// </summary>
         // -----------------------------------------------------------------
-        public EndPoint(UUID id, string host, int port)
+        public EndPoint(UUID id, IPAddress host, int port)
         {
             EndPointID = id;
             Host = host;
             Port = port;
             LastRenewTime = 0;
             LifeSpan = 0;
-            
-            IPHostEntry hostinfo = Dns.Resolve(Host);
-            if (hostinfo.AddressList.Length == 0)
-            {
-                m_log.WarnFormat("[Dispatcher] unable to resolve host {0}",Host);
-                return;
-            }
 
-            IPAddress addr = hostinfo.AddressList[0];
-            m_endpoint = new IPEndPoint(addr,Port);
+            m_endpoint = new IPEndPoint(Host,Port);
         }
         
         /// -----------------------------------------------------------------

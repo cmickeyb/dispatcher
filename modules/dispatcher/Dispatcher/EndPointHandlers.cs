@@ -140,9 +140,28 @@ namespace Dispatcher.Handlers
                 return OperationFailed("wrong type of request object");
 
             CreateEndPointRequest request = (CreateEndPointRequest)irequest;
+            
+            if (String.IsNullOrEmpty(request.CallbackHost))
+                return OperationFailed("Missing required parameter, CallbackHost");
+            
+            // As a security measure, only accept callbacks to the host where the 
+            // callback creation request originated. This prevents someone from using
+            // the dispatcher for generating random spam to hosts
+            IPAddress addr;
+            try
+            {
+                addr = (IPAddress)IPAddress.Parse(request.CallbackHost);
+            }
+            catch (Exception e)
+            {
+                return OperationFailed(String.Format("Failed to parse endpoint address, {0}", request.CallbackHost));
+            }
+
+            if (addr.Equals(request._SourceAddress))
+                return OperationFailed(String.Format("Endpoint address must match request address, {0}",request.CallbackHost));
 
             UUID id = UUID.Random();
-            EndPoint ep = new EndPoint(id,request.CallbackHost,request.CallbackPort);
+            EndPoint ep = new EndPoint(id,addr,request.CallbackPort);
 
             ep.LastRenewTime = Util.EnvironmentTickCount();
             ep.LifeSpan = Math.Max(request.LifeSpan,m_dispatcher.MaxInterPingTime);

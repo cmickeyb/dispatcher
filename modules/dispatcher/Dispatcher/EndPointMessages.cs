@@ -70,6 +70,8 @@ namespace Dispatcher.Messages
         [JsonProperty]
         public int LifeSpan { get; set; }
             
+        // CallbackHost is expected to be a string representation of an
+        // ip address, it will be parse with IPAddress.Parse()
         [JsonProperty]
         public String CallbackHost { get; set; }
 

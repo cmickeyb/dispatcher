@@ -53,6 +53,7 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.IO;
+using System.Text.RegularExpressions;
 
 using log4net;
 using Nini.Config;
@@ -103,10 +104,12 @@ namespace Dispatcher
 
         private static int m_socketTimeout = 10000; // 10 second timeout
         
+        // --------------------------------------------------
+        // Configuration variables
+        // --------------------------------------------------
         private IConfig m_config  = null;
         private bool   m_enabled    = false;
 
-        // these cover configurable properties
         private string m_httppath = "/Dispatcher/";
         private int m_udpport = 45325;
         private string m_host = "";
@@ -123,6 +126,14 @@ namespace Dispatcher
         private int m_maxInterPingTime = 3000; // milliseconds
         public int MaxInterPingTime { get { return m_maxInterPingTime; } }
 
+        private bool m_filterIPs = false;
+        public bool FilterIPs  { get { return m_filterIPs; } }
+
+        private string m_filterPattern = String.Empty;
+        private Regex m_filterRegex = null;
+        public string FilterPattern  { get { return m_filterPattern; } }
+
+        // --------------------------------------------------
         private Queue<RequestBase> m_requestQueue = new Queue<RequestBase>();
         public Queue<RequestBase> RequestQueue { get { return m_requestQueue; } }
 
@@ -198,6 +209,22 @@ namespace Dispatcher
 
                     m_maxRequestThreads = m_config.GetInt("MaxAsyncThreads",m_maxRequestThreads);
                     m_maxInterPingTime = m_config.GetInt("MaxInterPingTime",m_maxInterPingTime);
+
+                    m_filterIPs = m_config.GetBoolean("UseIPAddressFiltering",m_filterIPs);
+                    m_filterPattern = m_config.GetString("AcceptableIPAddressPattern",m_filterPattern);
+                    if (! String.IsNullOrEmpty(m_filterPattern))
+                    {
+                        try
+                        {
+                            m_filterRegex = new Regex(m_filterPattern);
+                            //m_log.DebugFormat("[Dispatcher] filtering ip addresses with pattern <{0}>",m_filterPattern);
+                        }
+                        catch (Exception e)
+                        {
+                            m_log.WarnFormat("[Dispatcher] failed to parse regular expression in AcceptableIPAddressPattern");
+                            m_filterRegex = null;
+                        }
+                    }
 
                     m_authorizer = new AuthHandlers(m_config,this);
                     m_infohandler = new InfoHandlers(m_config,this);
@@ -695,7 +722,7 @@ namespace Dispatcher
         /// <summary>
         /// </summary>
         // -----------------------------------------------------------------
-        private void InvokeAsynchronousHandler(string request)
+        private void InvokeAsynchronousHandler(string request, IPAddress address)
         {
             try
             {
@@ -708,6 +735,7 @@ namespace Dispatcher
                 
                 // This request has to be asynchronous
                 req._AsyncRequest = true;
+                req._SourceAddress = address;
                 
                 // Don't care about the results
                 InvokeHandler(req);
@@ -743,6 +771,9 @@ namespace Dispatcher
                 if (String.IsNullOrEmpty(req._Domain))
                     req._Domain = domain;
                 
+                // Save the source address
+                req._SourceAddress = request.RemoteIPEndPoint.Address;
+
                 resp = InvokeHandler(req);
             }
             catch (Exception e)
@@ -778,6 +809,9 @@ namespace Dispatcher
                 if (String.IsNullOrEmpty(req._Domain))
                     req._Domain = domain;
                 
+                // Save the source address
+                req._SourceAddress = request.RemoteIPEndPoint.Address;
+
                 resp = InvokeHandler(req);
             }
             catch (Exception e)
@@ -792,11 +826,31 @@ namespace Dispatcher
         /// <summary>
         /// </summary>
         // -----------------------------------------------------------------
-        public byte[] HandleStreamRequest(string path, Stream stream, IOSHttpRequest request, IOSHttpResponse response)
+        private bool IsAcceptableIPAddress(IPAddress addr)
+        {
+            if (FilterIPs)
+                // if the regex failed to parse, be conservative and don't let anyone
+                // get into the dispatcher
+                return m_filterRegex != null && m_filterRegex.IsMatch(addr.ToString());
+
+            return true;
+        }
+
+        /// -----------------------------------------------------------------
+        /// <summary>
+        /// </summary>
+        // -----------------------------------------------------------------
+        private byte[] HandleStreamRequest(string path, Stream stream, IOSHttpRequest request, IOSHttpResponse response)
         {
             string domain = path.Remove(0,m_httppath.Length);
             m_log.DebugFormat("[Dispatcher] path={0}, domain={1}, content-type={2}",path,domain,request.ContentType);
 
+            if (! IsAcceptableIPAddress(request.RemoteIPEndPoint.Address))
+            {
+                m_log.WarnFormat("[Dispatcher] request from filtered IP address, {0}",request.RemoteIPEndPoint.Address.ToString());
+                return null;
+            }
+            
             switch (request.ContentType)
             {
             case "application/bson" :
@@ -818,23 +872,29 @@ namespace Dispatcher
         // -----------------------------------------------------------------
         private void AsynchronousListenLoop()
         {
-            IPEndPoint remoteEndPoint = new IPEndPoint(IPAddress.Any,m_udpport);
+            IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any,m_udpport);
             Socket mListener = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            mListener.Bind(remoteEndPoint);
+            mListener.Bind(localEndPoint);
             mListener.ReceiveTimeout = m_socketTimeout;
             
+            System.Net.EndPoint remoteEndPoint = new IPEndPoint(IPAddress.Any, 0);
             byte[] buffer = new byte[1024];
 
             while (true)
             {
                 try
                 {
-                    int count = mListener.Receive(buffer,0,buffer.Length,SocketFlags.None);
+                    int count = mListener.ReceiveFrom(buffer,0,buffer.Length,SocketFlags.None, ref remoteEndPoint);
 
                     if (count > 0)
                     {
                         string sdata = Encoding.ASCII.GetString(buffer,0,count);
-                        Util.FireAndForget( delegate { InvokeAsynchronousHandler(sdata); } );
+                        IPAddress addr = new IPAddress(((IPEndPoint)remoteEndPoint).Address.GetAddressBytes());
+                        
+                        if (IsAcceptableIPAddress(addr))
+                            Util.FireAndForget( delegate { InvokeAsynchronousHandler(sdata,addr); } );
+                        else
+                            m_log.WarnFormat("[Dispatcher] packet request from filtered IP address, {0}",addr.ToString());
                     }
 
                 }

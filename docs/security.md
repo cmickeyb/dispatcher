@@ -50,6 +50,19 @@ send any message.
     Enabled = true
     UseAuthentication = false
 
+### Limit Access to Local Hosts ###
+
+This configuration uses IP address filtering to drop any connections
+that are initiated from hosts other than `127.0.0.1` and
+`192.168.*.*`. Filtering by address happens prior to authentication and,
+therefore, can be used to reduce the potential for denial of service
+attacks and capability reuse.
+
+    [Dispatcher]
+    Enabled = true
+    UseIPAddressFiltering = True
+    AcceptableIPAddressPattern = "^(127.0.0.1)|(192\.168\.\d{1,3}\.\d{1,3})$"
+
 ### Access Limited to Estate Managers ###
 
 Limit access to users specified in the OpenSim configuration as Estate
@@ -76,6 +89,5 @@ than 200. Account access levels can be set when the account is created.
 
 ## TODO ##
 
-* Filter incoming requests by IP address prior to handling the request.
-* Implement domain specific access configuration
+* Implement message domain-specific access configuration
 * Add risk levels and message specific access controls similar to OSSL

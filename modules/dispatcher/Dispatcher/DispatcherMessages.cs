@@ -498,8 +498,11 @@ namespace Dispatcher.Messages
         [JsonProperty]
         public bool _AsyncRequest { get; set; }
             
-        // This is filled in by the dispatcher
+        // Authenticated user account filled in by the dispatcher module
         public UserAccount _UserAccount { get; set; }
+
+        // IP address of the request source filled in by the dispatcher module
+        public IPAddress _SourceAddress { get; set; }
 
         // -----------------------------------------------------------------
         /// <summary>

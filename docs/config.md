@@ -53,6 +53,24 @@ should only happen in physically isolated networks. Defaults to `true`.
 
     `UseAuthentication = True`
 
+* **UseIPAddressFiltering** -- Specify whether to use IP address
+filtering in addition to  any other authentication. This is particularly
+useful for reducing the exposure of denial of service attacks and
+capability replay attacks. Defaults to `false`.
+
+    `UseIPAddressFiltering = false`
+
+* **AcceptableIPAddressPattern** -- When IP address filtering is
+enabled, this variable contains the regular expression for acceptable IP
+addresses. For example the expression, `"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"`,
+would match all addresses and the expression `"^127\.0\.0\.1$"` would
+limit to the local host. There is no default value, failure to specify a
+pattern when using address filtering will disable all access to the
+dispatcher interface.
+
+    `AcceptableIPAddressPattern = "^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"`
+
+
 * **GrantEstateManagersAccess** -- Specify that estate managers or the
 estate owner may access dispatcher commands regardless of account access
 level. Defaults to `true`.
