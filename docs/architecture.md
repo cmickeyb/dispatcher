@@ -67,3 +67,7 @@ defined in the companion "remote control" package). These are
 authentication messages, informational messages, and endpoint
 messages. Additional messages are provided in the remote control module.
 
+Detailed information about the messages in each domain can be found here:
+
+* [Dispatcher](messages/dispatcher.md)
+* [Remote Control](messages/rcontrol.md)
