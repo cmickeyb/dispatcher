@@ -13,7 +13,7 @@
   <!-- Quicksort Module -->
 
   <ReferencePath>../../bin/</ReferencePath>
-  <Reference name="Newtonsoft.Json.dll" path="bin/v4_0/" />
+  <Reference name="Newtonsoft.Json.dll" path="lib/v4_0/"/>
   <Reference name="Mono.Addins.dll" localCopy="false" />
   <Reference name="log4net.dll" localCopy="false" />
   <Reference name="System" localCopy="false"/>
@@ -34,8 +34,9 @@
 
   <Files>
     <Match pattern="*.cs" recurse="true"/>
-    <Match pattern="*.ini.example" buildAction="Copy" destination="../../bin/" />
-    <Match pattern="*.html" buildAction="Copy" destination="../../bin/" />
-    <Match pattern="*.dll" recurse="true" buildAction="Copy" destination="../../bin/" />
+    <Match pattern="*.ini.example" buildAction="Copy" destination="../../bin" />
+    <Match pattern="*.txt" buildAction="Copy" destination="../../bin" />
+    <Match pattern="lib/v4_0/Newtonsoft.Json.*" buildAction="Copy" destination="../../bin/" />
+    <!-- <Match pattern="*.dll" recurse="true" buildAction="Copy" destination="../../bin/" /> -->
   </Files>
 </Project>
