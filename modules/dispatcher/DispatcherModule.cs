@@ -76,9 +76,6 @@ using Newtonsoft.Json.Linq;
 using Dispatcher.Messages;
 using Dispatcher.Handlers;
 
-[assembly: Addin("Dispatcher", "0.1")]
-[assembly: AddinDependency("OpenSim", "0.5")]
-
 namespace Dispatcher
 {
     public class DispatcherStat
@@ -93,13 +90,22 @@ namespace Dispatcher
         }
     }
 
-    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule")]
+    [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "DispatcherModule")]
 
     public class DispatcherModule  : ISharedRegionModule, IDispatcherModule
     {
         private static readonly ILog m_log =
             LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
         
+        private static string AssemblyDirectory
+        {
+            get
+            {
+                string location = Assembly.GetExecutingAssembly().Location;
+                return Path.GetDirectoryName(location);
+            }
+        }
+
         private static string m_separator = "::";
 
         private static int m_socketTimeout = 10000; // 10 second timeout
@@ -183,6 +189,17 @@ namespace Dispatcher
         {
             try 
             {
+                string configFileName = "Dispatcher.ini";
+                string exampleConfigFile = Path.Combine(AssemblyDirectory, "Dispatcher.ini.example");
+                string configFilePath;
+                bool created;
+
+                Util.MergeConfigurationFile(config, configFileName, exampleConfigFile, out configFilePath, out created);
+                if (created)
+                {
+                    m_log.ErrorFormat("[Dispatcher] please edit configuration at {0} before running this module",configFilePath);
+                }
+
                 if ((m_config = config.Configs["Dispatcher"]) == null)
                 {
                     // There is no configuration, the module is disabled
