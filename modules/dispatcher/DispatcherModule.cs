@@ -190,20 +190,20 @@ namespace Dispatcher
             try 
             {
                 string configFileName = "Dispatcher.ini";
-                string exampleConfigFile = Path.Combine(AssemblyDirectory, "Dispatcher.ini.example");
                 string configFilePath;
                 bool created;
 
-                Util.MergeConfigurationFile(config, configFileName, exampleConfigFile, out configFilePath, out created);
-                if (created)
+                if (! Util.MergeConfigurationFile(config, configFileName, "", out configFilePath, out created))
                 {
-                    m_log.ErrorFormat("[Dispatcher] please edit configuration at {0} before running this module",configFilePath);
+                    string exampleConfigFile = Path.Combine(AssemblyDirectory, "Dispatcher.ini.example");
+                    m_log.WarnFormat("[Dispatcher] please edit configuration at {0} before running this module, an example can be found at {1}",
+                                     configFilePath, exampleConfigFile);
                 }
 
                 if ((m_config = config.Configs["Dispatcher"]) == null)
                 {
                     // There is no configuration, the module is disabled
-                    m_log.InfoFormat("[Dispatcher] no configuration info");
+                    m_log.InfoFormat("[Dispatcher] no configuration info, module disabled");
                     return;
                 }
 
