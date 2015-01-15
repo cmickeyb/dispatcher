@@ -19,7 +19,7 @@
   <Reference name="System.Xml" localCopy="false" />
   <Reference name="Nini" localCopy="false"/>
   <Reference name="DispatcherModule" localCopy="false" />
-  <Reference name="Newtonsoft.Json" localCopy="false"/> 
+  <Reference name="Newtonsoft.Json" path="../dispatcher/lib/v4_0" localCopy="false"/> 
   <Reference name="OpenSim.Services.Interfaces" localCopy="false"/>
   <Reference name="OpenSim.Framework" localCopy="false"/>
   <Reference name="OpenSim.Framework.Communications" localCopy="false"/>
