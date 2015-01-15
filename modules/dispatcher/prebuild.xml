@@ -10,15 +10,14 @@
     </Options>
   </Configuration>
 
-  <!-- Quicksort Module -->
+  <!-- Dispatcher Module -->
 
   <ReferencePath>../../bin/</ReferencePath>
-  <Reference name="Newtonsoft.Json.dll" path="lib/v4_0/"/>
-  <Reference name="Mono.Addins.dll" localCopy="false" />
-  <Reference name="log4net.dll" localCopy="false" />
+  <Reference name="Newtonsoft.Json" path="lib/v4_0/"/>
+  <Reference name="Mono.Addins" localCopy="false" />
+  <Reference name="log4net" localCopy="false" />
   <Reference name="System" localCopy="false"/>
-  <Reference name="System.Drawing" localCopy="false"/>
-  <Reference name="Nini.dll" localCopy="false"/>
+  <Reference name="Nini" localCopy="false"/>
   <Reference name="OpenSim.Framework" localCopy="false"/>
   <Reference name="OpenSim.Framework.Monitoring" localCopy="false"/>
   <Reference name="OpenSim.Framework.Communications" localCopy="false"/>
@@ -28,9 +27,9 @@
   <Reference name="OpenSim.Region.CoreModules" localCopy="false"/>
   <Reference name="OpenSim.Region.Framework" localCopy="false"/>
   <Reference name="OpenSim.Services.Interfaces" localCopy="false"/>
-  <Reference name="OpenMetaverseTypes.dll" localCopy="false"/>
+  <Reference name="OpenMetaverseTypes" localCopy="false"/>
   <Reference name="OpenMetaverse.StructuredData" localCopy="false"/>
-  <Reference name="OpenMetaverse.dll" localCopy="false"/>
+  <Reference name="OpenMetaverse" localCopy="false"/>
 
   <Files>
     <Match pattern="*.cs" recurse="true"/>

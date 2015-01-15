@@ -71,9 +71,6 @@ using OpenSim.Region.Framework.Scenes.Serialization;
 using RemoteControl.Messages;
 using RemoteControl.Handlers;
 
-[assembly: Addin("RemoteControlModule", OpenSim.VersionInfo.VersionNumber + ".1")]
-[assembly: AddinDependency("OpenSim.Region.Framework", OpenSim.VersionInfo.VersionNumber)]
-
 namespace RemoteControl
 {
     [Extension(Path = "/OpenSim/RegionModules", NodeName = "RegionModule", Id = "RemoteControlModule")]
