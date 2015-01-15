@@ -75,10 +75,8 @@ using Mono.Addins;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("0.8.1.*")]
-
-[assembly: Addin("RemoteControlModule", OpenSim.VersionInfo.VersionNumber + ".1")]
+[assembly: Addin("RemoteControlModule", Version = OpenSim.VersionInfo.VersionNumber + ".2")]
 [assembly: AddinDependency("OpenSim.Region.Framework", OpenSim.VersionInfo.VersionNumber)]
-[assembly: AddinDependency("DispatcherModule", OpenSim.VersionInfo.VersionNumber + ".1")]
+[assembly: AddinDependency("DispatcherModule", OpenSim.VersionInfo.VersionNumber + ".2")]
 [assembly: AddinDescription("Remote scene access for OpenSim")]
 [assembly: AddinAuthor("Mic Bowman")]
