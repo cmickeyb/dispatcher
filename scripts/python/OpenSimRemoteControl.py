@@ -535,7 +535,7 @@ class OpenSimRemoteControl() :
         async = self.AsyncRequest if async == None else async
         parms = Parameters(self,'RemoteControl','RemoteControl.Messages.SetPartColorRequest', async)
         parms['ObjectID'] = str(objectid)
-        parms['LinkNum'] = part
+        parms['LinkNum'] = partnum
         parms['Color'] = color if color else [0.0, 0.0, 0.0]
         parms['Alpha'] = alpha if alpha else 0.0
 
