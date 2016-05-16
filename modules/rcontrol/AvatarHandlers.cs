@@ -193,7 +193,7 @@ namespace RemoteControl.Handlers
         private void CleanCurrentOutfitFolder(ScenePresence sp)
         {
             IInventoryService iservice = m_scene.InventoryService;
-            InventoryFolderBase folder = iservice.GetFolderForType(sp.UUID,AssetType.CurrentOutfitFolder);
+            InventoryFolderBase folder = iservice.GetFolderForType(sp.UUID,FolderType.CurrentOutfit);
             if (folder == null)
             {
                 m_log.WarnFormat("[AvatarHandlers] Unable to find current outfit folder for {0}",sp.UUID);
@@ -228,7 +228,7 @@ namespace RemoteControl.Handlers
         private void AddWearablesToCurrentOutfitFolder(ScenePresence sp)
         {
             IInventoryService iservice = m_scene.InventoryService;
-            InventoryFolderBase folder = iservice.GetFolderForType(sp.UUID,AssetType.CurrentOutfitFolder);
+            InventoryFolderBase folder = iservice.GetFolderForType(sp.UUID,FolderType.CurrentOutfit);
             if (folder == null)
             {
                 m_log.WarnFormat("[AvatarHandlers] Unable to find current outfit folder for {0}",sp.UUID);
