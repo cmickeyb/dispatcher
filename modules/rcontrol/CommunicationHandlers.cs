@@ -120,7 +120,6 @@ namespace RemoteControl.Handlers
             msg.Scene = m_scene;
             msg.Type = ChatTypeEnum.Say;
             msg.Sender = null;
-            msg.SenderUUID = req._UserAccount.PrincipalID;
             msg.From = req._UserAccount.Name;
             msg.Message = req.Message;
             msg.Position = req.Position;
