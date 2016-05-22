@@ -126,8 +126,10 @@ namespace RemoteControl.Handlers
             ScenePresence sp = m_scene.GetScenePresence(id);
             if (sp == null || sp.IsChildAgent)
                 return OperationFailed(String.Format("cannot find user {0}",request._UserAccount.PrincipalID));
-            
-            OSDMap osd = sp.Appearance.Pack();
+
+            EntityTransferContext ctx = new EntityTransferContext();
+            ctx.WearablesCount = -1;
+            OSDMap osd = sp.Appearance.Pack(ctx);
             String appearance = OSDParser.SerializeJsonString(osd);
             
             return new AvatarAppearanceResponse(appearance);
@@ -177,9 +179,9 @@ namespace RemoteControl.Handlers
             // this didn't work either, 
             //AddWearablesToCurrentOutfitFolder(sp);
 
-            sp.SendAvatarDataToAllClients();
-            sp.SendAppearanceToAllOtherClients();
-            sp.SendAppearanceToClient(sp); // the viewers seem to ignore this packet when it describes their own avatar
+            sp.SendAvatarDataToAllAgents();
+            sp.SendAppearanceToAllOtherAgents();
+            sp.SendAppearanceToAgent(sp); // the viewers seem to ignore this packet when it describes their own avatar
             
             return new ResponseBase(ResponseCode.Success,"");
         }
@@ -236,7 +238,7 @@ namespace RemoteControl.Handlers
             }
             
             List<InventoryItemBase> items = new List<InventoryItemBase>();
-            for (int i = 0; i < AvatarWearable.MAX_WEARABLES; i++)
+            for (int i = 0; i < AvatarWearable.LEGACY_VERSION_MAX_WEARABLES; i++)
             {
                 for (int j = 0; j < sp.Appearance.Wearables[i].Count; j++)
                 {
