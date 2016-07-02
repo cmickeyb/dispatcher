@@ -98,7 +98,7 @@ class BulkUpdateItem() :
 class OpenSimRemoteControl() :
 
     # -----------------------------------------------------------------
-    def __init__(self, endpoint, async = False, logfile = None):
+    def __init__(self, endpoint, async = False, logfile = None, num_pools = 10, maxsize = 1):
         self.EndPoint = str(endpoint)
         self.AsyncRequest = async
         self.MessagesSent = 0
@@ -111,7 +111,7 @@ class OpenSimRemoteControl() :
         self.Scene = ''
         self.DomainList = ['Dispatcher', 'RemoteControl', 'RemoteSensor']
         
-        self.PoolManager = urllib3.PoolManager()
+        self.PoolManager = urllib3.PoolManager(num_pools=num_pools, maxsize=maxsize)
 
     # -----------------------------------------------------------------
     def _PostDebug(self, oparms):
