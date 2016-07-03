@@ -462,6 +462,21 @@ namespace RemoteControl.Messages
     /// <summary>
     ///    
     /// </summary>
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+    public class DeleteBulkObjectsRequest : Dispatcher.Messages.RequestBase
+    {
+        [JsonProperty]
+        public List<UUID> ObjectIDs { get; set; }
+
+        public DeleteBulkObjectsRequest()
+        {
+            ObjectIDs = new List<UUID>();
+        }
+    }
+
+    /// <summary>
+    ///    
+    /// </summary>
     [JsonObject(MemberSerialization=MemberSerialization.OptIn)]
     public class DeleteObjectRequest : Dispatcher.Messages.RequestBase
     {
@@ -531,6 +546,50 @@ namespace RemoteControl.Messages
             ObjectID = oid;
         }
     }
+
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+    public class ObjectSpecification
+    {
+        [JsonProperty]
+        public ObjectDynamicsData ObjectData { get; set; }
+
+        [JsonProperty]
+        public String Name { get; set; }
+
+        [JsonProperty]
+        public String Description { get; set; }
+
+        [JsonProperty]
+        public String StartParameter { get; set; }
+
+        [JsonProperty]
+        public UUID AssetID { get; set; }
+
+        public ObjectSpecification()
+        {
+            ObjectData = null;
+            Name = "RemoteControl Object";
+            Description = "RemoteControl Generated Object";
+            StartParameter = "{}";
+            AssetID = UUID.Zero;
+        }
+    }
+
+    /// <summary>
+    ///    
+    /// </summary>
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+    public class CreateBulkObjectsRequest : Dispatcher.Messages.RequestBase
+    {
+        [JsonProperty]
+        public List<ObjectSpecification> Objects { get; set; }
+
+        public CreateBulkObjectsRequest()
+        {
+            Objects = new List<ObjectSpecification>();
+        }
+    }
+
 
     // -----------------------------------------------------------------
     // Object Communication Messages
