@@ -111,7 +111,9 @@ namespace RemoteControl.Handlers
             m_dispatcher.UnregisterOperationHandler(m_scene,m_domain,typeof(GetObjectPartsRequest));
 
             m_dispatcher.UnregisterOperationHandler(m_scene,m_domain,typeof(CreateObjectRequest));
+            m_dispatcher.UnregisterOperationHandler(m_scene, m_domain,typeof(CreateBulkObjectsRequest));
             m_dispatcher.UnregisterOperationHandler(m_scene,m_domain,typeof(DeleteObjectRequest));
+            m_dispatcher.UnregisterOperationHandler(m_scene, m_domain,typeof(DeleteBulkObjectsRequest));
             m_dispatcher.UnregisterOperationHandler(m_scene,m_domain,typeof(DeleteAllObjectsRequest));
         }
 
@@ -147,7 +149,9 @@ namespace RemoteControl.Handlers
             m_dispatcher.RegisterOperationHandler(m_scene,m_domain,typeof(GetObjectPartsRequest),GetObjectPartsHandler);
 
             m_dispatcher.RegisterOperationHandler(m_scene,m_domain,typeof(CreateObjectRequest),CreateObjectHandler);
+            m_dispatcher.RegisterOperationHandler(m_scene, m_domain, typeof(CreateBulkObjectsRequest),CreateBulkObjectsHandler);
             m_dispatcher.RegisterOperationHandler(m_scene,m_domain,typeof(DeleteObjectRequest),DeleteObjectHandler);
+            m_dispatcher.RegisterOperationHandler(m_scene, m_domain, typeof(DeleteBulkObjectsRequest),DeleteBulkObjectsHandler);
             m_dispatcher.RegisterOperationHandler(m_scene,m_domain,typeof(DeleteAllObjectsRequest),DeleteAllObjectsHandler);
         }
 #endregion
@@ -242,7 +246,32 @@ namespace RemoteControl.Handlers
 
             return new Dispatcher.Messages.ResponseBase(ResponseCode.Success,"");
         }
-        
+
+        /// -----------------------------------------------------------------
+        /// <summary>
+        /// </summary>
+        // -----------------------------------------------------------------
+        public Dispatcher.Messages.ResponseBase DeleteBulkObjectsHandler(Dispatcher.Messages.RequestBase irequest)
+        {
+            if (irequest.GetType() != typeof(DeleteBulkObjectsRequest))
+                return OperationFailed("wrong type of request object");
+
+            DeleteBulkObjectsRequest request = (DeleteBulkObjectsRequest)irequest;
+
+            StringBuilder warnings = new StringBuilder();
+            foreach (UUID id in request.ObjectIDs)
+            {
+                SceneObjectGroup sog = m_scene.GetSceneObjectGroup(id);
+                if (sog == null)
+                {
+                    warnings.AppendFormat("no such object {0}; ", id);
+                    continue;
+                }
+                m_scene.DeleteSceneObject(sog, false, true);
+            }
+            return new Dispatcher.Messages.ResponseBase(ResponseCode.Success, warnings.ToString());
+        }
+
         /// -----------------------------------------------------------------
         /// <summary>
         /// </summary>
@@ -311,7 +340,84 @@ namespace RemoteControl.Handlers
                 
             return new CreateObjectResponse(sog.UUID);
         }
-        
+
+        /// -----------------------------------------------------------------
+        /// <summary>
+        /// </summary>
+        // -----------------------------------------------------------------
+        public Dispatcher.Messages.ResponseBase CreateBulkObjectsHandler(Dispatcher.Messages.RequestBase irequest)
+        {
+            if (irequest.GetType() != typeof(CreateBulkObjectsRequest))
+                return OperationFailed("wrong type of request object");
+
+            StringBuilder warnings = new StringBuilder();
+
+            CreateBulkObjectsRequest request = (CreateBulkObjectsRequest)irequest;
+
+            foreach (ObjectSpecification obj in request.Objects)
+            {
+                ObjectDynamicsData odata = obj.ObjectData;
+
+                if (odata == null)
+                {
+                    warnings.AppendFormat("missing object specification for asset {0}; ", obj.AssetID);
+                    continue;
+                }
+
+                if (obj.AssetID == UUID.Zero)
+                {
+                    warnings.AppendFormat("missing asset for object {0}; ", odata.ObjectID);
+                    continue;
+                }
+
+                SceneObjectGroup sog = null;
+
+                try
+                {
+                    m_log.DebugFormat("[ObjectHandlers] create object \"{0}\" from asset {1}", obj.Name, obj.AssetID);
+
+                    sog = GetRezReadySceneObject(obj.AssetID, obj.Name, obj.Description,
+                                                 request._UserAccount.PrincipalID, UUID.Zero);
+                    if (sog == null)
+                    {
+                        warnings.AppendFormat("unable to create object from asset {0}; ", obj.AssetID);
+                        continue;
+                    }
+
+                    if (odata.ObjectID != UUID.Zero)
+                        sog.UUID = odata.ObjectID;
+
+                    if (!String.IsNullOrEmpty(obj.StartParameter))
+                    {
+                        if (m_jsonstore != null)
+                        {
+                            // really should register an event handler on the scene to destroy this
+                            // store when we are done
+                            UUID storeID = sog.UUID;
+                            m_jsonstore.CreateStore(obj.StartParameter, ref storeID);
+                        }
+                    }
+
+                    if (!m_scene.AddNewSceneObject(sog, false, odata.Position, odata.Rotation, odata.Velocity))
+                    {
+                        warnings.AppendFormat("failed to add the object {0} to the scene; ", odata.ObjectID);
+                        continue;
+                    }
+
+                    sog.CreateScriptInstances(0, true, m_scene.DefaultScriptEngine, 3);
+                    sog.ScheduleGroupForFullUpdate();
+                }
+                catch (Exception e)
+                {
+                    m_log.WarnFormat("[ObjectHandlers] exception thrown in CreateObjectsHandler; {0}", e.ToString());
+                    return OperationFailed(e.Message);
+                }
+            }
+
+            return new Dispatcher.Messages.ResponseBase(ResponseCode.Success, warnings.ToString());
+        }
+
+
         /// -----------------------------------------------------------------
         /// <summary>
         /// </summary>
