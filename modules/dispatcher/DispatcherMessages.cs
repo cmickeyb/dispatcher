@@ -171,8 +171,7 @@ namespace Dispatcher.Messages
                 if (objectType != typeof(UUID))
                     return null;
 
-                UUID cobj = (UUID)existingObject;
-                cobj = UUID.Zero;
+                UUID cobj = UUID.Zero;
                 if (reader.TokenType == JsonToken.String)
                 {
                     UUID id;
