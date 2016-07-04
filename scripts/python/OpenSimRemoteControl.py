@@ -616,6 +616,32 @@ class OpenSimRemoteControl() :
         return self._PostRequest(parms)
 
     # -----------------------------------------------------------------
+    # NAME: RegisterUpdatedCallback
+    # -----------------------------------------------------------------
+    def RegisterUpdatedCallback(self, objectids, endpointid, async = None) :
+        async = self.AsyncRequest if async == None else async
+        parms = Parameters(self,'RemoteControl','RemoteControl.Messages.RegisterUpdatedCallbackRequest', async)
+        parms['EndPointID'] = str(endpointid)
+        parms['ObjectIDs'] = []
+        for o in objectids:
+            parms['ObjectIDs'].append(str(o))
+
+        return self._PostRequest(parms)
+
+    # -----------------------------------------------------------------
+    # NAME: UnregisterUpdatedCallback
+    # -----------------------------------------------------------------
+    def UnregisterUpdatedCallback(self, objectids, requestid, async = None) :
+        async = self.AsyncRequest if async == None else async
+        parms = Parameters(self,'RemoteControl','RemoteControl.Messages.UnregisterUpdatedCallbackRequest', async)
+        parms['RequestID'] = str(requestid)
+        parms['ObjectIDs'] = []
+        for o in objectids:
+            parms['ObjectIDs'].append(str(o))
+
+        return self._PostRequest(parms)
+
+    # -----------------------------------------------------------------
     # NAME: TestAsset
     # -----------------------------------------------------------------
     def TestAsset(self, assetid, async = None) :
