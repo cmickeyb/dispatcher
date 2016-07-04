@@ -600,7 +600,7 @@ class OpenSimRemoteControl() :
         async = self.AsyncRequest if async == None else async
         parms = Parameters(self,'RemoteControl','RemoteControl.Messages.RegisterTouchCallbackRequest', async)
         parms['ObjectID'] = str(objectid)
-        parms['EndPointID'] = str(endpoint)
+        parms['EndPointID'] = str(endpointid)
 
         return self._PostRequest(parms)
 
