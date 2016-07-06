@@ -81,7 +81,7 @@ class BulkUpdateItem() :
     # -----------------------------------------------------------------
     def ConvertForEncoding(self) :
         info = dict()
-        info['ObjectID'] = self.ObjectID
+        info['ObjectID'] = str(self.ObjectID)
         if self.Position :
             info['Position'] = self.Position
         if self.Velocity :
@@ -92,7 +92,28 @@ class BulkUpdateItem() :
             info['Acceleration'] = self.Acceleration
             
         return info
-    
+
+class ObjectSpecification() :
+    def __init__(self, dynamics, assetid, name = None, desc = None, parm = "{}", async = None):
+        self.ObjectData = dynamics
+        self.AssetID = assetid
+        self.Name = name
+        self.Description = desc
+        self.StartParameter = parm
+
+    def ConvertForEncoding(self) :
+        info = dict()
+        info['ObjectData'] = self.ObjectData.ConvertForEncoding()
+        info['AssetID'] = str(self.AssetID)
+        if self.Name:
+            info['Name'] = self.Name
+        if self.Description:
+            info['Description'] = self.Description
+        if self.StartParameter:
+            info['StartParameter'] = self.StartParameter
+            
+        return info
+
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ## XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 class OpenSimRemoteControl() :
@@ -378,12 +399,43 @@ class OpenSimRemoteControl() :
         return self._PostRequest(parms)
 
     # -----------------------------------------------------------------
+    # NAME: CreateBulkObjects
+    # -----------------------------------------------------------------
+    def CreateBulkObjects(self, objects, async = None) :
+        '''
+        objects: a list of ObjectSpecification objects
+        '''
+        async = self.AsyncRequest if async == None else async
+        parms = Parameters(self,'RemoteControl','RemoteControl.Messages.CreateBulkObjectsRequest', async)
+        parms['Objects'] = []
+        for obj in objects :
+            parms['Objects'].append(obj.ConvertForEncoding())
+
+        return self._PostRequest(parms)
+
+
+    # -----------------------------------------------------------------
     # NAME: DeleteObject
     # -----------------------------------------------------------------
     def DeleteObject(self, objectid, async = None) :
         async = self.AsyncRequest if async == None else async
         parms = Parameters(self,'RemoteControl','RemoteControl.Messages.DeleteObjectRequest', async)
         parms['ObjectID'] = str(objectid)
+
+        return self._PostRequest(parms)
+
+    # -----------------------------------------------------------------
+    # NAME: DeleteBulkObjects
+    # -----------------------------------------------------------------
+    def DeleteBulkObjects(self, objectids, async = None) :
+        '''
+        objectids = list of UUIDs
+        '''
+        async = self.AsyncRequest if async == None else async
+        parms = Parameters(self,'RemoteControl','RemoteControl.Messages.DeleteBulkObjectsRequest', async)
+        parms['ObjectIDs'] = []
+        for o in objectids:
+            parms['ObjectIDs'].append(str(o))
 
         return self._PostRequest(parms)
 
@@ -548,7 +600,7 @@ class OpenSimRemoteControl() :
         async = self.AsyncRequest if async == None else async
         parms = Parameters(self,'RemoteControl','RemoteControl.Messages.RegisterTouchCallbackRequest', async)
         parms['ObjectID'] = str(objectid)
-        parms['EndPointID'] = str(endpoint)
+        parms['EndPointID'] = str(endpointid)
 
         return self._PostRequest(parms)
 
@@ -560,6 +612,32 @@ class OpenSimRemoteControl() :
         parms = Parameters(self,'RemoteControl','RemoteControl.Messages.UnregisterTouchCallbackRequest', async)
         parms['ObjectID'] = str(objectid)
         parms['RequestID'] = str(requestid)
+
+        return self._PostRequest(parms)
+
+    # -----------------------------------------------------------------
+    # NAME: RegisterUpdatedCallback
+    # -----------------------------------------------------------------
+    def RegisterUpdatedCallback(self, objectids, endpointid, async = None) :
+        async = self.AsyncRequest if async == None else async
+        parms = Parameters(self,'RemoteControl','RemoteControl.Messages.RegisterUpdatedCallbackRequest', async)
+        parms['EndPointID'] = str(endpointid)
+        parms['ObjectIDs'] = []
+        for o in objectids:
+            parms['ObjectIDs'].append(str(o))
+
+        return self._PostRequest(parms)
+
+    # -----------------------------------------------------------------
+    # NAME: UnregisterUpdatedCallback
+    # -----------------------------------------------------------------
+    def UnregisterUpdatedCallback(self, objectids, requestid, async = None) :
+        async = self.AsyncRequest if async == None else async
+        parms = Parameters(self,'RemoteControl','RemoteControl.Messages.UnregisterUpdatedCallbackRequest', async)
+        parms['RequestID'] = str(requestid)
+        parms['ObjectIDs'] = []
+        for o in objectids:
+            parms['ObjectIDs'].append(str(o))
 
         return self._PostRequest(parms)
 
