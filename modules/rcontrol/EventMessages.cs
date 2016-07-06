@@ -47,6 +47,7 @@ using Mono.Addins;
 
 using System;
 using System.Text;
+using System.Collections.Generic;
 
 using log4net;
 using OpenMetaverse;
@@ -134,7 +135,75 @@ namespace RemoteControl.Messages
         }
     }
 
-    
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+    public class RegisterUpdatedCallbackRequest : RequestBase
+    {
+        [JsonProperty]
+        public List<UUID> ObjectIDs { get; set; }
+
+        [JsonProperty]
+        public UUID EndPointID { get; set; }
+
+        public RegisterUpdatedCallbackRequest()
+        {
+            ObjectIDs = new List<UUID>();
+            EndPointID = UUID.Zero;
+        }
+    }
+
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+    public class RegisterUpdatedCallbackResponse : ResponseBase
+    {
+        [JsonProperty]
+        public UUID RequestID { get; set; }
+
+        public RegisterUpdatedCallbackResponse(UUID req, String message) : base(ResponseCode.Success, message)
+        {
+            RequestID = req;
+        }
+    }
+
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+    public class UnregisterUpdatedCallbackRequest : RequestBase
+    {
+        [JsonProperty]
+        public List<UUID> ObjectIDs { get; set; }
+
+        [JsonProperty]
+        public UUID RequestID { get; set; }
+
+        public UnregisterUpdatedCallbackRequest()
+        {
+            ObjectIDs = new List<UUID>();
+            RequestID = UUID.Zero;
+        }
+    }
+
+    [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+    public class UpdatedCallback : CallbackBase
+    {
+        [JsonProperty]
+        public UUID ObjectID { get; set; }
+
+        [JsonProperty]
+        public UUID RequestID { get; set; }
+
+        [JsonProperty]
+        public Vector3 Position { get; set; }
+
+        // Maybe later add more properties
+        //[JsonProperty]
+        //public SurfaceTouchEventArgs TouchEvent { get; set; }
+
+        public UpdatedCallback(UUID obj, UUID req, Vector3 pos)
+        {
+            ObjectID = obj;
+            RequestID = req;
+            Position = pos;
+        }
+    }
+
+
 }
 
 

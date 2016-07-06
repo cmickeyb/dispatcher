@@ -72,20 +72,33 @@ namespace RemoteControl.Handlers
         private static readonly ILog m_log =
             LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
+        protected enum EventType
+        {
+            Touch = 1,
+            Position = 2
+        }
+
         protected class EventCallback
         {
             public UUID ObjectID { get; set; }
             public UUID EndPointID { get; set; }
             public UUID RequestID { get; set; }
+            public EventType EventType { get; set; }
 
             public EventCallback(UUID id, UUID endpoint, UUID req)
             {
                 ObjectID = id;
                 EndPointID = endpoint;
                 RequestID = req;
+                EventType = EventType.Touch;
+            }
+            public EventCallback(UUID id, UUID endpoint, UUID req, EventType t)
+                : this(id, endpoint, req)
+            {
+                EventType = t;
             }
         }
-        
+
         // the object registry is keyed off object id
         Dictionary<UUID,List<EventCallback>> m_objectRegistry = new Dictionary<UUID,List<EventCallback>>();
 
@@ -100,7 +113,10 @@ namespace RemoteControl.Handlers
         public EventHandlers(Scene scene, IDispatcherModule dispatcher, string domain) : base(scene,dispatcher,domain)
         {
             m_scene.EventManager.OnObjectGrab += touch_start;
+            m_scene.EventManager.OnSceneObjectPartUpdated += OnSceneObjectPartUpdated;
+            m_scene.EventManager.OnObjectBeingRemovedFromScene += OnObjectBeingRemovedFromScene;
         }
+
 
         /// -----------------------------------------------------------------
         /// <summary>
@@ -129,10 +145,16 @@ namespace RemoteControl.Handlers
             m_dispatcher.RegisterOperationHandler(m_scene,m_domain,typeof(UnregisterTouchCallbackRequest),UnregisterTouchCallbackHandler);
             m_dispatcher.RegisterMessageType(typeof(RegisterTouchCallbackResponse));
             m_dispatcher.RegisterMessageType(typeof(TouchCallback));
-        }
-#endregion
 
-#region ScriptInvocationInteface
+            m_dispatcher.RegisterOperationHandler(m_scene, m_domain, typeof(RegisterUpdatedCallbackRequest), RegisterUpdatedCallbackHandler);
+            m_dispatcher.RegisterOperationHandler(m_scene, m_domain, typeof(UnregisterUpdatedCallbackRequest), UnregisterUpdatedCallbackHandler);
+            m_dispatcher.RegisterMessageType(typeof(RegisterUpdatedCallbackResponse));
+            m_dispatcher.RegisterMessageType(typeof(UpdatedCallback));
+
+        }
+        #endregion
+
+        #region ScriptInvocationInterface
         /// -----------------------------------------------------------------
         /// <summary>
         /// </summary>
@@ -289,6 +311,177 @@ namespace RemoteControl.Handlers
                 ep.Send(touch);
             }
         }
+        #endregion
+
+        #region Object updates
+        private Dictionary<UUID, Vector3> m_LastPositions = new Dictionary<UUID, Vector3>();
+        /// -----------------------------------------------------------------
+        /// <summary>
+        /// </summary>
+        /// -----------------------------------------------------------------
+        ///
+        public Dispatcher.Messages.ResponseBase RegisterUpdatedCallbackHandler(Dispatcher.Messages.RequestBase irequest)
+        {
+            if (irequest.GetType() != typeof(RegisterUpdatedCallbackRequest))
+                return OperationFailed("wrong type");
+
+            RegisterUpdatedCallbackRequest request = (RegisterUpdatedCallbackRequest)irequest;
+
+            StringBuilder warnings = new StringBuilder();
+            UUID requestID = UUID.Random();
+            foreach (UUID oid in request.ObjectIDs)
+            {
+                // Get the object and register a handler for it
+                SceneObjectGroup sog = m_scene.GetSceneObjectGroup(oid);
+                if (sog == null)
+                {
+                    warnings.AppendFormat("no such object {0}; ", oid);
+                    continue;
+                }
+
+                if (sog.UUID != oid)
+                {
+                    warnings.AppendFormat("updated callback must be registered for root prim; ");
+                    continue;
+                }
+
+                // Create the event callback structure
+                EventCallback cb = new EventCallback(oid, request.EndPointID, requestID, EventType.Position);
+
+                // Add it to the object registry for handling events
+                lock (m_objectRegistry)
+                {
+                    if (!m_objectRegistry.ContainsKey(oid))
+                        m_objectRegistry.Add(oid, new List<EventCallback>());
+                    m_objectRegistry[oid].Add(cb);
+                }
+
+                // Add it to the endpoint registry for handling changes in the endpoint state
+                lock (m_endpointRegistry)
+                {
+                    if (!m_endpointRegistry.ContainsKey(request.EndPointID))
+                    {
+                        m_endpointRegistry.Add(request.EndPointID, new List<EventCallback>());
+
+                        // Only need to register the handler for the first request for this endpoint
+                        EndPoint ep = m_dispatcher.LookupEndPoint(request.EndPointID);
+                        ep.AddCloseHandler(this.EndPointCloseHandler);
+                    }
+                    m_endpointRegistry[request.EndPointID].Add(cb);
+                }
+
+                m_LastPositions[oid] = sog.RootPart.GroupPosition;
+
+                m_log.DebugFormat("[EventHandlers] registered updated callback for {0}", oid);
+            }
+
+            return new RegisterUpdatedCallbackResponse(requestID, warnings.ToString());
+        }
+
+        /// -----------------------------------------------------------------
+        /// <summary>
+        /// </summary>
+        /// -----------------------------------------------------------------
+        public Dispatcher.Messages.ResponseBase UnregisterUpdatedCallbackHandler(Dispatcher.Messages.RequestBase irequest)
+        {
+            if (irequest.GetType() != typeof(UnregisterUpdatedCallbackRequest))
+                return OperationFailed("wrong type");
+
+            UnregisterUpdatedCallbackRequest request = (UnregisterUpdatedCallbackRequest)irequest;
+            StringBuilder warnings = new StringBuilder();
+
+            foreach (UUID oid in request.ObjectIDs)
+            {
+                // Find the EventCallback structure
+                List<EventCallback> cb = null;
+                lock (m_objectRegistry)
+                {
+                    List<EventCallback> cblist = null;
+                    if (!m_objectRegistry.TryGetValue(oid, out cblist))
+                    {
+                        warnings.AppendFormat("no handler for requested object {0}; ", oid);
+                        continue;
+                    }
+
+                    cb = cblist.FindAll(delegate (EventCallback test) { return test.RequestID == request.RequestID && test.EventType == EventType.Position; });
+                    if (cb == null || (cb!= null && cb.Count == 0))
+                        return OperationFailed(String.Format("invalid request id {0}", request.RequestID));
+
+                    foreach (EventCallback e in cb)
+                        cblist.Remove(e);
+                }
+
+                lock (m_endpointRegistry)
+                {
+                    List<EventCallback> cblist = null;
+                    if (m_endpointRegistry.TryGetValue(cb[0].EndPointID, out cblist))
+                    {
+                        foreach (EventCallback e in cb)
+                            cblist.Remove(e);
+                        if (cblist.Count == 0)
+                        {
+                            EndPoint ep = m_dispatcher.LookupEndPoint(cb[0].EndPointID);
+                            ep.RemoveCloseHandler(this.EndPointCloseHandler);
+
+                            m_endpointRegistry.Remove(cb[0].EndPointID);
+                        }
+                    }
+                }
+                m_log.DebugFormat("[EventHandlers] unregistered touch callback for {0}", oid);
+            }
+
+            return new Dispatcher.Messages.ResponseBase(ResponseCode.Success, warnings.ToString());
+        }
+
+        private void OnSceneObjectPartUpdated(SceneObjectPart sop, bool full)
+        {
+            UUID objectID = sop.ParentGroup.UUID;
+
+            if (objectID != sop.UUID)
+                return;
+
+            List<EventCallback> cblist = null;
+            if (!m_objectRegistry.TryGetValue(sop.UUID, out cblist))
+                return;
+
+            List<EventCallback> posEvents = cblist.FindAll(e => e.EventType == EventType.Position);
+            if (posEvents == null || (posEvents != null && posEvents.Count == 0))
+                return;
+
+            if (m_LastPositions[objectID] != sop.GroupPosition)
+            {
+                m_log.DebugFormat("[EventHandlers]: Object {0} position updated", sop.Name);
+                // Send the callback
+                UpdatedCallback updated = new RemoteControl.Messages.UpdatedCallback(sop.UUID, UUID.Zero, sop.GroupPosition);
+                foreach (EventCallback cb in posEvents)
+                {
+                    EndPoint ep = m_dispatcher.LookupEndPoint(cb.EndPointID);
+                    if (ep == null)
+                    {
+                        m_log.WarnFormat("[EventHandlers] unable to locate endpoint {0}", cb.RequestID);
+                        return;
+                    }
+
+                    updated.RequestID = cb.RequestID;
+                    ep.Send(updated);
+                }
+                m_LastPositions[objectID] = sop.GroupPosition;
+            }
+
+        }
+
+        #endregion
+
+        private void OnObjectBeingRemovedFromScene(SceneObjectGroup obj)
+        {
+            lock (m_objectRegistry)
+            {
+                if (m_objectRegistry.ContainsKey(obj.UUID))
+                    m_objectRegistry.Remove(obj.UUID);
+                if (m_LastPositions.ContainsKey(obj.UUID))
+                    m_LastPositions.Remove(obj.UUID);
+            }
+        }
 
         /// -----------------------------------------------------------------
         /// <summary>
@@ -338,6 +531,5 @@ namespace RemoteControl.Handlers
                     sog.RootPart.RemoveScriptEvents(cb.RequestID);
             }
         }
-#endregion
     }
 }
