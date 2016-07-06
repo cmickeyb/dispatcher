@@ -157,8 +157,8 @@ namespace Dispatcher.Handlers
                 return OperationFailed(String.Format("Failed to parse endpoint address, {0}", request.CallbackHost));
             }
 
-            if (addr.Equals(request._SourceAddress))
-                return OperationFailed(String.Format("Endpoint address must match request address, {0}",request.CallbackHost));
+            if (!addr.Equals(request._SourceAddress))
+                return OperationFailed(String.Format("Endpoint address must match request address, {0} {1}",request.CallbackHost, request._SourceAddress));
 
             UUID id = UUID.Random();
             EndPoint ep = new EndPoint(id,addr,request.CallbackPort);
